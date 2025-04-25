@@ -1,26 +1,37 @@
-async def process_channel_club_input(self, user_id: int, text: str, api_key: str, state_data: dict):
+import re
+
+async def process_channel_club_input(self, user_id: int, text: str, api_key: bytes, state_data: dict):
     """Обработка id канала"""
 
-    if len(text) == 9 and text.isdigit():
+    match = re.search(r'vk\.com/club(\d+)', text)
+    club_id = match.group(1) if match else None
+    print(club_id)
+    print(text)
+
+    if text == "Отмена":
+        self.process_exit(self)
+        del self.awaiting_input[user_id]
+
+    if len(club_id) == 9:
 
         try:
             # Сохраняем в базу данных
             await self.db.save_channel_club(
                 user_id=user_id,
-                club_id=text,
+                club_id=club_id,
                 api_key=api_key,
                 session_id=state_data["session_id"],
             )
 
             self.awaiting_input[user_id] = {
                 "state": "awaiting_channel_name",
-                "club_id": text,
+                "club_id": club_id,
                 "session_id": state_data["session_id"],
             }
 
             await self.send_message(
                 user_id,
-                f"ID группы {text} успешно сохранено. Введите название канала: ",
+                f"ID группы {club_id} успешно сохранено. Введите название канала: ",
                 keyboard=self.create_publish_time_keyboard(self)
             )
 

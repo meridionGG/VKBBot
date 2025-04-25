@@ -1,11 +1,12 @@
 import json
 import asyncio
+from cryptography.fernet import Fernet
 
 import aiovk
 from aiovk import API, TokenSession
 from aiovk.longpoll import BotsLongPoll
 
-from var import chat_access_token, group_id, wall_post_access_token
+from var import chat_access_token, group_id, wall_post_access_token, encryption_key
 
 import time
 from MainKeyboard.main_keyboard import create_keyboard
@@ -17,6 +18,9 @@ from MainKeyboard.attachments_keyboard import attachments_keyboard
 from MainKeyboard.multiply_keyboard import create_multiply_keyboard
 from MainKeyboard.done_keyboard import create_done_keyboard
 from MainKeyboard.settings_keyboard import create_settings_keyboard
+from MainKeyboard.my_posts_keyboard import my_posts_keyboard
+from MainKeyboard.exit_keyboard import exit_keyboard
+from MainKeyboard.single_post_keyboard import single_post_keyboard
 
 from awaiting_state import handle_awaiting_state
 from expired_states import clear_expired_states
@@ -35,6 +39,7 @@ from logic.process_publish_attachments import process_publish_attachments
 from logic.process_multiply_posts_attachments import process_multiply_posts_attachments
 from logic.process_multiply_posts_random import process_multiply_posts_random
 from logic.process_timezone import process_timezone
+from logic.process_exit import process_exit
 
 from commands.start import start
 from commands.new_post import new_post
@@ -63,6 +68,9 @@ from Database.db_config import DB_CONFIG
 
 class VKBot:
     def __init__(self):
+
+        self.f = Fernet(encryption_key) #for encrypted data
+
         self.db = Database()
         self.session = None
         self.api = None
@@ -80,7 +88,9 @@ class VKBot:
         self.create_multiply_keyboard = create_multiply_keyboard
         self.create_done_keyboard = create_done_keyboard
         self.create_settings_keyboard = create_settings_keyboard
-
+        self.my_posts_keyboard = my_posts_keyboard
+        self.exit_keyboard = exit_keyboard
+        self.single_post_keyboard = single_post_keyboard
 
         #Состояния
         self.handle_awaiting_state = handle_awaiting_state
@@ -114,6 +124,7 @@ class VKBot:
         self.process_multiply_posts_attachments = process_multiply_posts_attachments
         self.process_multiply_posts_random = process_multiply_posts_random
         self.process_timezone = process_timezone
+        self.process_exit = process_exit
 
         self.check_publish_time = check_publish_time
         self.correct_attachments = correct_attachments
@@ -202,8 +213,6 @@ class VKBot:
                 post_id=int(response['post_id'])
             )
 
-            return response['post_id']
-
         except Exception as e:
             print("Error:", e)
         # await self.wall_session.close()
@@ -211,10 +220,21 @@ class VKBot:
 
     async def handle_message(self, user_id: int, text: str, attachments: str):
 
+        print(text)
         message = text
         print(attachments)
 
         #await self.clear_expired_states(self)
+
+        async with self.db.pool.acquire() as conn:
+            time_zone = await conn.fetch("SELECT timezone FROM vkprod10_timezone WHERE user_id = $1",
+                                         user_id)
+
+        all_time_zones = [record['timezone'] for record in time_zone]
+        if all_time_zones == []:
+            time_zone = "+3"  # по стандарту стоит МСК
+        else:
+            time_zone = all_time_zones[-1]
 
         # Если есть ожидаемое состояние - обрабатываем его
         if user_id in self.awaiting_input:
@@ -233,10 +253,11 @@ class VKBot:
             'Мои каналы': self.handle_my_channels,
             'Мои посты': self.handle_my_posts,
             'Настройки': self.handle_settings,
-            'Часовой пояс [GMT +3]': self.handle_timezone,
-            'Перемешивать посты': self.handle_mixposts,
+             f"Часовой пояс [GMT {time_zone}]": self.handle_timezone,
+            'Перемешать посты': self.handle_mixposts,
             'Добавить канал': self.handle_add_channel,
-            'Список каналов': self.handle_list_my_channels
+            'Список каналов': self.handle_list_my_channels,
+            'Отмена': self.process_exit
         }
 
         handler = command_handlers.get(message)

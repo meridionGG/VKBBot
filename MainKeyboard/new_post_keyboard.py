@@ -3,7 +3,7 @@ import json
 def create_new_post_keyboard(self):
     """Создание клавиатуры, которая работает во всех клиентах"""
     keyboard = {
-        "one_time": False,
+        "one_time": True,
         "inline": False,  # Обычная клавиатура (не inline)
         "buttons": [
             [{
@@ -12,7 +12,7 @@ def create_new_post_keyboard(self):
                     "label": "Один пост",
                     "payload": "{\"button\": \"one_post\"}"
                 },
-                "color": "positive"
+                "color": "secondary"
             }],
             [{
                 "action": {
@@ -25,10 +25,10 @@ def create_new_post_keyboard(self):
             [{
                 "action": {
                     "type": "text",
-                    "label": "Назад",
+                    "label": "Отмена",
                     "payload": "{\"button\": \"back\"}"
                 },
-                "color": "secondary"
+                "color": "negative"
             }],
         ]
     }

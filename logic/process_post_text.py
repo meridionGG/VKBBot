@@ -1,6 +1,6 @@
 from datetime import datetime
 
-async def process_post_text(self, user_id: int, text: str, channel_id: str, channel_name: str, state_data: dict):
+async def process_post_text(self, user_id: int, text: str, channel_name: str, state_data: dict):
     """Обработка текста поста"""
     time = int(datetime.now().timestamp())
 
@@ -9,7 +9,6 @@ async def process_post_text(self, user_id: int, text: str, channel_id: str, chan
         await self.db.save_message_text(
             user_id=user_id,
             text=text, #Текст поста
-            channel_id=channel_id, #vk_api_key
             channel_name=channel_name, #Имя канала
             session_id=state_data["session_id"],
         )
@@ -21,7 +20,6 @@ async def process_post_text(self, user_id: int, text: str, channel_id: str, chan
         self.awaiting_input[user_id] = {
             "state": "awaiting_post_attachments",
             "session_id": state_data["session_id"],
-            "channel_id": channel_id,
             "channel_name": channel_name,
             "text": text,
             "timestamp": time #Могу использовать, но не обязательно

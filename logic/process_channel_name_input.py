@@ -13,7 +13,7 @@ async def process_channel_name_input(self, user_id: int, text: str, club_id: str
         await self.send_message(
             user_id,
             f"Канал {text} успешно сохранен. Можете отправлять посты!",
-            keyboard=self.create_publish_time_keyboard(self)
+            keyboard=self.create_keyboard(self)
         )
 
     except Exception as e:

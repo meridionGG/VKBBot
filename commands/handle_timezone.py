@@ -8,7 +8,7 @@ async def handle_timezone(self, user_id: int):
         await self.send_message(
             user_id,
             "Укажите ваш часовой пояс от -12 до +14: ",
-            keyboard=None
+            keyboard=self.exit_keyboard(self)
         )
 
         if user_id not in self.user_sessions:

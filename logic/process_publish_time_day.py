@@ -1,7 +1,7 @@
 from datetime import datetime
 
 
-async def process_publish_time_day(self, user_id: int, message: str, text: str, channel_id: str, channel_name, state_data: dict, link):
+async def process_publish_time_day(self, user_id: int, message: str, channel_name, state_data: dict, link):
 
     print(state_data)
 
@@ -14,9 +14,7 @@ async def process_publish_time_day(self, user_id: int, message: str, text: str, 
         self.awaiting_input[user_id] = {
             "state": "awaiting_publish_time_time",
             "session_id": state_data["session_id"],
-            "channel_id": channel_id,
             "channel_name": channel_name,
-            "text": text,
             "link": link,
             "publish_day": text_day,
             "timestamp": time
@@ -24,7 +22,7 @@ async def process_publish_time_day(self, user_id: int, message: str, text: str, 
 
         await self.send_message(
             user_id,
-            f"✅ Пост сохранен! Выберите время публикации в виде чч:мм. Учитывайте, что посты будут выкладываться по Московскому времени: ",
+            f"Выберите время публикации в виде чч:мм.",
         )
 
     except Exception as e:

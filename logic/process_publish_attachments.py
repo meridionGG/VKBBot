@@ -6,13 +6,13 @@ import re
 attachments_list = []
 links_list = []
 
-async def process_publish_attachments(self, user_id: int, message: str, channel_id: str, state_data: dict, channel_name, attachments):
+async def process_publish_attachments(self, user_id: int, message: str, state_data: dict, channel_name, attachments):
     session_id = state_data["session_id"]
     # attachments_list = []
     if message == "Да":
         await self.send_message(
             user_id,
-            "Можете отправлять фотографии по 1 штуке. По завершении нажмите на кнопку 'Подтвердить' или 'Отменить', чтобы вернуться в главное меню.\nТакже можете только 1 ссылку.",
+            "Можете отправлять фотографии по 1 штуке. По завершении нажмите на кнопку 'Подтвердить' или 'Отмена', чтобы вернуться в главное меню.\nТакже можете добавить только 1 ссылку.",
             keyboard=self.create_multiply_posts_keyboard(self)
         )
 
@@ -45,7 +45,6 @@ async def process_publish_attachments(self, user_id: int, message: str, channel_
             "channel_name": channel_name,
             "text": message,
             "link": link,
-            "channel_id": channel_id
         }
 
     if message == "Нет":
@@ -64,6 +63,5 @@ async def process_publish_attachments(self, user_id: int, message: str, channel_
             "channel_name": channel_name,
             "text": message,
             "link": None,
-            "channel_id": channel_id
         }
 

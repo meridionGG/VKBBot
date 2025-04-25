@@ -1,6 +1,7 @@
 from datetime import datetime, timezone, timedelta
 import re
 import random
+import time
 
 posts = []
 
@@ -19,7 +20,7 @@ async def process_multiply_posts_time(self, user_id: int, message: str, attachme
     if all_time_zones == []:
         time_zone = "+3" #по стандарту стоит МСК
     else:
-        time_zone = all_time_zones[0]
+        time_zone = all_time_zones[-1]
     print(f"Timezone in db {time_zone}")
 
     for i in range(len(records)):
@@ -27,73 +28,89 @@ async def process_multiply_posts_time(self, user_id: int, message: str, attachme
 
         if await is_valid_time(records[i]) == True:
 
-            time = await subtract_hours(records[i], time_zone)
+            time1 = await subtract_hours(records[i], time_zone)
 
             utc_time = datetime.now(timezone.utc)
             utc_time_date = str(utc_time.date())
-            time_today = utc_time_date + " " + time + ":00"
+            time_today = utc_time_date + " " + time1 + ":00"
             print(time_today)
             publish_date_timestamp = datetime.strptime(time_today, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
             publish_date_timestamp_unix = int(publish_date_timestamp.timestamp())
 
-            async with self.db.pool.acquire() as conn:
-                message = await conn.fetch("SELECT posts_text FROM vkprod11_multiply_posts WHERE session_id = $1",
-                                               session_id)
+            if publish_date_timestamp_unix > time.time():
 
-                all_messages = [record['posts_text'] for record in message]
-                result_message = all_messages[i]
 
-                owners_id = await conn.fetch("SELECT owner_id FROM vkprod9_channels WHERE user_id = $1",
-                                                user_id)
+                async with self.db.pool.acquire() as conn:
+                    message = await conn.fetch("SELECT posts_text FROM vkprod11_multiply_posts WHERE session_id = $1",
+                                                session_id)
 
-                channels_id = await conn.fetch("SELECT channel_id FROM vkprod9_channels WHERE user_id = $1",
-                                                user_id)
+                    all_messages = [record['posts_text'] for record in message]
+                    result_message = all_messages[i]
 
-                photos = await conn.fetch(
-                    "SELECT photo_id, owner_id FROM vkprod11_multiply_posts WHERE user_id = $1 AND session_id = $2 AND posts_text = $3",
-                                                user_id, session_id, result_message)
+                    owners_id = await conn.fetch("SELECT owner_id FROM vkprod11_channels WHERE user_id = $1",
+                                                    user_id)
 
-                photo_strings = [f"photo{record['owner_id']}_{record['photo_id']}" for record in photos]
+                    channels_id = await conn.fetch("SELECT channel_id FROM vkprod11_channels WHERE user_id = $1",
+                                                    user_id)
 
-                attachments = ", ".join(photo_strings)
+                    photos = await conn.fetch(
+                        "SELECT photo_id, owner_id FROM vkprod11_multiply_posts WHERE user_id = $1 AND session_id = $2 AND posts_text = $3",
+                                                    user_id, session_id, result_message)
 
-                all_channels = [record['channel_id'] for record in channels_id]
+                    photo_strings = [f"photo{record['owner_id']}_{record['photo_id']}" for record in photos]
+
+                    attachments = ", ".join(photo_strings)
+
+                    all_channels = [record['channel_id'] for record in channels_id]
 
                     # all_messages = [record['posts_text'] for record in message]
                     # result_message = all_messages[i]
 
-                print(result_message)
-                all_owner_ids = [record['owner_id'] for record in owners_id]
+                    print(result_message)
+                    all_owner_ids = [record['owner_id'] for record in owners_id]
 
-                for j in range(len(all_owner_ids)):
-                    result_owner_id = all_owner_ids[j]
-                    print(result_owner_id)
+                    for j in range(len(all_owner_ids)):
+                        result_owner_id = all_owner_ids[j]
+                        print(result_owner_id)
 
-                    await self.db.multiply_posts_timestamp(
-                        user_id=user_id,
-                        owner_id=int(result_owner_id),
-                        text=result_message,
-                        attachments=attachments,
-                        publish_date=publish_date_timestamp_unix
-                    )
+                        await self.db.multiply_posts_timestamp(
+                            user_id=user_id,
+                            owner_id=int(result_owner_id),
+                            text=result_message,
+                            attachments=attachments,
+                            publish_date=publish_date_timestamp_unix
+                        )
 
-                    await self.update_token(
-                        new_token=all_channels[0]
-                    )
+                        decrypted_binary_channel_id = self.f.decrypt(all_channels[0])
+                        decrypted_channel_id = decrypted_binary_channel_id.decode('utf-8')
+                        # print(f"Encrypted token - {token}")
+                        print(f"Decrypted token - {decrypted_channel_id} with type of - {type(decrypted_channel_id)}")
 
-                    await self.post_to_wall(
-                        user_id=user_id,
-                        owner_id=int(result_owner_id),
-                        text=result_message,
-                        attachments=attachments,
-                        publish_date=publish_date_timestamp_unix
-                    )
+                        await self.update_token(
+                            new_token=decrypted_channel_id
+                        )
 
-        await self.send_message(
-            user_id,
-            f"Посты успешно отправлены.",
-            keyboard=None
-        )
+                        await self.post_to_wall(
+                            user_id=user_id,
+                            owner_id=int(result_owner_id),
+                            text=result_message,
+                            attachments=attachments,
+                            publish_date=publish_date_timestamp_unix
+                        )
+
+                        await self.wall_session.close()
+
+            else:
+                await self.send_message(
+                user_id,
+                f"Неверно ввели время публикации. Проверьте на соответствие с ЧЧ:ММ.",
+                )
+
+    await self.send_message(
+        user_id,
+        f"Посты успешно отправлены.",
+        keyboard=self.create_keyboard(self)
+    )
 
     del self.awaiting_input[user_id]
     del self.user_sessions[user_id]

@@ -24,6 +24,15 @@ async def process_multiply_posts_text(self, user_id: int, message: str, state_da
             "session_id": state_data["session_id"]
         }
 
+    elif message == "Отмена":
+        await self.send_message(
+            user_id,
+            f"Действие отменено.",
+            self.create_keyboard(self)
+        )
+
+        del self.awaiting_input[user_id]
+
     else:
         await self.db.save_posts_text(
             user_id=user_id,

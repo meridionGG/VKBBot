@@ -22,14 +22,6 @@ def create_my_channels_keyboard(self):
                 },
                 "color": "secondary"
             }],
-            [{
-                "action": {
-                    "type": "text",
-                    "label": "Назад",
-                    "payload": "{\"button\": \"back\"}"
-                },
-                "color": "secondary"
-            }],
         ]
     }
     return json.dumps(keyboard, ensure_ascii=False)

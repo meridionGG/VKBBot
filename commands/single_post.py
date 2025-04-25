@@ -6,7 +6,7 @@ async def single_post(self, user_id: int):
     #должна быть проверка на доступные каналы
 
     async with self.db.pool.acquire() as conn:
-        channel_ids = await conn.fetch("SELECT channel_name FROM vkprod9_channels WHERE user_id = $1",
+        channel_ids = await conn.fetch("SELECT channel_name FROM vkprod11_channels WHERE user_id = $1",
                                        user_id)
 
         all_channel_ids = [record['channel_name'] for record in channel_ids]
@@ -17,7 +17,7 @@ async def single_post(self, user_id: int):
         await self.send_message(
             user_id,
             "У вас нет доступных каналов. Добавьте используя 'Мои каналы'.",
-            keyboard=None
+            keyboard=self.create_keyboard(self)
         )
 
     else:
@@ -39,6 +39,6 @@ async def single_post(self, user_id: int):
 
         await self.send_message(
             user_id,
-            f"📝 Введите название канала для публикации. Вот доступные вам каналы:\n{result}",
-            keyboard=None
+            f"📝 Введите название канала для публикации. Вот доступные вам каналы:",
+            keyboard=await self.single_post_keyboard(self, user_id)
         )

@@ -4,7 +4,7 @@ import uuid
 async def multiply_posts(self, user_id: int):
     #должна быть проверка на доступные каналы
     async with self.db.pool.acquire() as conn:
-        channel_ids = await conn.fetch("SELECT channel_name FROM vkprod9_channels WHERE user_id = $1",
+        channel_ids = await conn.fetch("SELECT channel_name FROM vkprod11_channels WHERE user_id = $1",
                                        user_id)
 
         all_channel_ids = [record['channel_name'] for record in channel_ids]
@@ -15,7 +15,7 @@ async def multiply_posts(self, user_id: int):
         await self.send_message(
             user_id,
             "У вас нет доступных каналов. Добавьте используя 'Мои каналы'.",
-            keyboard=None
+            keyboard=self.create_keyboard(self)
         )
 
     else:
@@ -39,5 +39,5 @@ async def multiply_posts(self, user_id: int):
         await self.send_message(
             user_id,
             "Можете ввести текст поста.",
-            keyboard=self.create_multiply_posts_keyboard(self)
+            keyboard=self.exit_keyboard(self)
         )

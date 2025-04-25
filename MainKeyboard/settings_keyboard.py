@@ -10,7 +10,7 @@ async def create_settings_keyboard(self, user_id):
     if all_time_zones == []:
         time_zone = "+3" #по стандарту стоит МСК
     else:
-        time_zone = all_time_zones[0]
+        time_zone = all_time_zones[-1]
     print(f"Timezone in db {time_zone}")
 
     """Создание клавиатуры, которая работает во всех клиентах"""
@@ -24,15 +24,23 @@ async def create_settings_keyboard(self, user_id):
                     "label": f"Часовой пояс [GMT {time_zone}]",
                     "payload": "{\"button\": \"timestamp\"}"
                 },
-                "color": "positive"
+                "color": "secondary"
             }],
             [{
                 "action": {
                     "type": "text",
-                    "label": "Перемешивать посты",
+                    "label": "Перемешать посты",
                     "payload": "{\"button\": \"mix_posts\"}"
                 },
                 "color": "secondary"
+            }],
+            [{
+                "action": {
+                    "type": "text",
+                    "label": "Отмена",
+                    "payload": "{\"button\": \"cancel\"}"
+                },
+                "color": "negative"
             }],
         ]
     }

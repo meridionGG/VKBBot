@@ -4,7 +4,7 @@ import time
 async def list_my_channels(self, user_id: int):
     """Обработка команды Список каналов"""
     async with self.db.pool.acquire() as conn:
-        channel_names = await conn.fetch("SELECT channel_name FROM vkprod9_channels WHERE user_id = $1",
+        channel_names = await conn.fetch("SELECT channel_name FROM vkprod11_channels WHERE user_id = $1",
                                        user_id)
 
         #print(channel_ids, type(str(channel_ids)))

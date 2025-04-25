@@ -33,7 +33,7 @@ def create_publish_time_keyboard(self):
             [{
                 "action": {
                     "type": "text",
-                    "label": "Настройки",
+                    "label": "Отменить",
                     "payload": "{\"button\": \"settings\"}"
                 },
                 "color": "secondary"
