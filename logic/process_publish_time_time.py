@@ -79,7 +79,7 @@ async def process_publish_time_time(self, user_id: int, message: str, state_data
 
                     channel_id = all_channel_ids[0]
 
-                    message = await conn.fetch("SELECT message_text FROM vkprod10_posts WHERE user_id = $1 AND session_id = $2",
+                    message = await conn.fetch("SELECT text FROM vkprod10_posts WHERE user_id = $1 AND session_id = $2",
                                                 user_id, session_id)
 
                     club = await conn.fetch("SELECT owner_id FROM vkprod11_channels WHERE channel_id = $1 AND channel_name = $2",
@@ -95,7 +95,7 @@ async def process_publish_time_time(self, user_id: int, message: str, state_data
                 # owner_id = str(photo['owner_id'])
 
 
-                    all_messages = [record['message_text'] for record in message]
+                    all_messages = [record['text'] for record in message]
                     print(all_messages)
                     result = all_messages[0]
                     club_id = [record['owner_id'] for record in club]
@@ -128,22 +128,28 @@ async def process_publish_time_time(self, user_id: int, message: str, state_data
                     else:
                         attachments = attachments
 
-                    await self.post_to_wall(
+                    if await self.post_to_wall(
                         user_id=user_id,
                         text=result,
                         owner_id=int(club_id),
                         publish_date=publish_date_timestamp_unix,
                         attachments=attachments
-                    )
+                    ) != False:
+                        print("трушечка")
+                        await self.send_message(
+                            user_id,
+                            f"Пост успешно отправлен.",
+                            self.create_keyboard(self)
+                        )
 
-                    await self.send_message(
-                        user_id,
-                        f"Пост успешно отправлен.",
-                        self.create_keyboard(self)
-                    )
+                    else:
+                        await self.send_message(
+                            user_id,
+                            f"Произошла ошибка. Попробуйте заново.",
+                            self.create_keyboard(self)
+                        )
 
                     print("Дошел")
-
                     del self.awaiting_input[user_id]
                     del self.user_sessions[user_id]
 
@@ -153,8 +159,14 @@ async def process_publish_time_time(self, user_id: int, message: str, state_data
         else:
             await self.send_message(
                 user_id,
-                f"Неверно ввели время публикации. Проверьте на соответствие с ЧЧ:ММ.",
+                f"Неверно ввели время публикации. Проверьте на соответствие с текущим временем.",
             )
+
+    else:
+        await self.send_message(
+            user_id,
+            f"Неверно ввели время публикации. Проверьте на соответствие с ЧЧ:ММ.",
+        )
 
     # del self.awaiting_input[user_id]
     # del self.user_sessions[user_id]

@@ -204,19 +204,21 @@ class VKBot:
 
         try:
             response = await self.wall_api.wall.post(**params)
-            print("Post successfully published! Post ID:", response['post_id'])
-
-            await self.db.multiply_posts_post_id_update(
-                user_id=user_id,
-                owner_id=owner_id,
-                text=text,
-                post_id=int(response['post_id'])
-            )
+            print(response)
+            if "post_id" in response:
+                print("Post successfully published! Post ID:", response['post_id'])
+                await self.db.multiply_posts_post_id_update(
+                    user_id=user_id,
+                    owner_id=owner_id,
+                    text=text,
+                    post_id=int(response['post_id'])
+                )
+                return response['post_id']
 
         except Exception as e:
-            print("Error:", e)
-        # await self.wall_session.close()
-        return True
+            print(e)
+            return False
+        await self.wall_session.close()
 
     async def handle_message(self, user_id: int, text: str, attachments: str):
 

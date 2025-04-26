@@ -30,14 +30,6 @@ def create_publish_time_keyboard(self):
                 },
                 "color": "secondary"
             }],
-            [{
-                "action": {
-                    "type": "text",
-                    "label": "Отменить",
-                    "payload": "{\"button\": \"settings\"}"
-                },
-                "color": "secondary"
-            }],
         ]
     }
     return json.dumps(keyboard, ensure_ascii=False)

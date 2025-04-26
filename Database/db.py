@@ -32,7 +32,7 @@ class Database:
                 session_id TEXT NOT NULL,
                 owner_id TEXT,
                 channel_name TEXT,
-                message_text TEXT,
+                text TEXT,
                 publish_time TEXT
                 )
             ''')
@@ -123,7 +123,7 @@ class Database:
             await conn.execute(
                 """
                 INSERT INTO vkprod10_posts
-                (user_id, session_id, channel_name, message_text)
+                (user_id, session_id, channel_name, text)
                 VALUES
                 ($1, $2, $3, $4)
                 """, user_id, session_id, channel_name, text)
@@ -136,7 +136,7 @@ class Database:
                 """
                 UPDATE vkprod10_posts
                 SET publish_time = $1, owner_id = $2
-                WHERE message_text = $3
+                WHERE text = $3
                 """, str(publish_date), channel_id, message_text
             )
 

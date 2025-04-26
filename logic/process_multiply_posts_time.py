@@ -98,19 +98,31 @@ async def process_multiply_posts_time(self, user_id: int, message: str, attachme
                             publish_date=publish_date_timestamp_unix
                         )
 
+                        await self.send_message(
+                            user_id,
+                            f"Пост {j} успешно отправлен.",
+                            keyboard=self.create_keyboard(self)
+                        )
+
                         await self.wall_session.close()
 
             else:
                 await self.send_message(
                 user_id,
-                f"Неверно ввели время публикации. Проверьте на соответствие с ЧЧ:ММ.",
+                f"Неверно ввели время публикации. Проверьте на соответствие с текущим временем.",
                 )
 
-    await self.send_message(
-        user_id,
-        f"Посты успешно отправлены.",
-        keyboard=self.create_keyboard(self)
-    )
+        else:
+            await self.send_message(
+                user_id,
+                f"Неверно ввели время публикации. Проверьте на соответствие с ЧЧ:ММ.",
+            )
+
+    # await self.send_message(
+    #     user_id,
+    #     f"Посты успешно отправлены.",
+    #     keyboard=self.create_keyboard(self)
+    # )
 
     del self.awaiting_input[user_id]
     del self.user_sessions[user_id]

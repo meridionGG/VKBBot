@@ -18,6 +18,7 @@ async def handle_mixposts(self, user_id: int):
         )
         return
 
+    i = 0
     for channel in channels:
         owner_id = channel['owner_id']
 
@@ -33,10 +34,10 @@ async def handle_mixposts(self, user_id: int):
         if not posts:
             await self.send_message(
                 user_id,
-                f"Нет будущих постов для owner_id = {owner_id}",
-                keyboard=None
+                f"Нет запланированных постов.",
+                keyboard=self.create_keyboard(self)
             )
-            continue
+            break
 
             # Собираем данные
         post_ids = [post['post_id'] for post in posts]  # ID постов в VK (для удаления)
@@ -52,7 +53,11 @@ async def handle_mixposts(self, user_id: int):
             channels_id = await conn.fetch("SELECT channel_id FROM vkprod11_channels WHERE user_id = $1",
                                             user_id)
 
+            channel_names = await conn.fetch("SELECT channel_name FROM vkprod11_channels WHERE user_id = $1",
+                                           user_id)
+
         all_channels = [record['channel_id'] for record in channels_id]
+        all_channel_names = [record['channel_name'] for record in channel_names]
 
         decrypted_binary_channel_id = self.f.decrypt(all_channels[0])
         decrypted_channel_id = decrypted_binary_channel_id.decode('utf-8')
@@ -89,11 +94,12 @@ async def handle_mixposts(self, user_id: int):
 
                 print(f"Опубликован пост {post_id} на время {new_time}")
 
-    await self.send_message(
-        user_id,
-        f"Посты успешно перемешаны",
-        keyboard=self.create_keyboard(self)
-    )
+        await self.send_message(
+            user_id,
+            f"Посты успешно перемешаны для {all_channel_names[i]}",
+            keyboard=self.create_keyboard(self)
+        )
+        i += 1
 
     # await self.send_message(
     #     user_id,
